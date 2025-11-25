@@ -27,7 +27,6 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync
-        uv add pillow click fastapi uvicorn jinja2 httpx pytest pytest-cov pylint black python-multipart numpy
     
     - name: Format code with Black
       run: |
