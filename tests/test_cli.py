@@ -1,6 +1,7 @@
 """
 Integration tests for the CLI module.
 """
+
 from unittest.mock import patch
 
 import pytest
@@ -124,6 +125,7 @@ def test_cli_normalize_with_output(runner, sample_image, tmp_path):
     assert "Image normalized." in result.output
     assert output_path.exists()
 
+
 def test_cli_normalize_invalid_image(runner):
     """Test CLI normalize with invalid image."""
     result = runner.invoke(cli, ["normalize", "nonexistent.jpg"])
@@ -144,11 +146,22 @@ def test_cli_crop_command(runner, sample_image, tmp_path):
     output_path = tmp_path / "cropped_cli.jpg"
     result = runner.invoke(
         cli,
-        ["crop", sample_image, "--box", "10", "10", "60", "60", "--output", str(output_path)],
+        [
+            "crop",
+            sample_image,
+            "--box",
+            "10",
+            "10",
+            "60",
+            "60",
+            "--output",
+            str(output_path),
+        ],
     )
     assert result.exit_code == 0
     assert "Image cropped to:" in result.output
     assert output_path.exists()
+
 
 def test_cli_crop_without_output(runner, sample_image):
     """Test CLI crop command without output path."""
@@ -159,7 +172,9 @@ def test_cli_crop_without_output(runner, sample_image):
 
 def test_cli_crop_invalid_image(runner):
     """Test CLI crop with invalid image path."""
-    result = runner.invoke(cli, ["crop", "nonexistent.jpg", "--box", "0", "0", "1", "1"])
+    result = runner.invoke(
+        cli, ["crop", "nonexistent.jpg", "--box", "0", "0", "1", "1"]
+    )
     assert result.exit_code == 0
     assert "Error" in result.output
 

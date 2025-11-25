@@ -151,10 +151,13 @@ def test_normalize_single_color_image(predictor):
     img.save(img_bytes, format="JPEG")
     img_bytes.seek(0)
 
-    normalized_bytes = predictor.normalize_image_from_bytes(img_bytes.getvalue(), "jpeg")
+    normalized_bytes = predictor.normalize_image_from_bytes(
+        img_bytes.getvalue(), "jpeg"
+    )
     assert isinstance(normalized_bytes, bytes)
     # The output should be a valid image (e.g., all black if std is zero)
     assert len(normalized_bytes) > 0
+
 
 def test_crop_image(predictor, sample_image):
     """Test image cropping."""
@@ -165,7 +168,9 @@ def test_crop_image(predictor, sample_image):
 def test_crop_image_with_output(predictor, sample_image, tmp_path):
     """Test image cropping with output file."""
     output_path = tmp_path / "cropped.jpg"
-    cropped_size = predictor.crop_image(sample_image, (20, 20, 80, 80), str(output_path))
+    cropped_size = predictor.crop_image(
+        sample_image, (20, 20, 80, 80), str(output_path)
+    )
     assert cropped_size == (60, 60)
     assert output_path.exists()
 

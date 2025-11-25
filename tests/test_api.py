@@ -1,6 +1,7 @@
 """
 Integration tests for the FastAPI application.
 """
+
 from unittest.mock import patch
 
 import pytest
@@ -173,7 +174,9 @@ def test_crop_endpoint_handles_exception(mock_crop, client, sample_image_file):
 
 
 @patch("logic.predictor.ImagePredictor.normalize_image_from_bytes")
-def test_normalize_endpoint_handles_exception(mock_normalize, client, sample_image_file):
+def test_normalize_endpoint_handles_exception(
+    mock_normalize, client, sample_image_file
+):
     """Test that the normalize endpoint handles exceptions gracefully."""
     mock_normalize.side_effect = Exception("Normalize failed")
     response = client.post("/normalize", files={"file": sample_image_file})

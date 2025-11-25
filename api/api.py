@@ -1,6 +1,7 @@
 """
 FastAPI application for image prediction and preprocessing.
 """
+
 import io
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -12,7 +13,7 @@ from logic.predictor import ImagePredictor
 app = FastAPI(
     title="Image Classification API",
     description="API for image classification and preprocessing",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 predictor = ImagePredictor()
@@ -20,11 +21,13 @@ predictor = ImagePredictor()
 
 class PredictionRequest(BaseModel):
     """Request model for prediction."""
+
     seed: int | None = None
 
 
 class PredictionResponse(BaseModel):
     """Response model for prediction."""
+
     predicted_class: str
     confidence: float
     all_classes: list[str]
@@ -32,12 +35,14 @@ class PredictionResponse(BaseModel):
 
 class ResizeRequest(BaseModel):
     """Request model for image resizing."""
+
     width: int
     height: int
 
 
 class ResizeResponse(BaseModel):
     """Response model for image resizing."""
+
     original_size: tuple[int, int]
     new_size: tuple[int, int]
     message: str
@@ -209,7 +214,7 @@ async def health():
     return {
         "status": "healthy",
         "service": "Image Classification API",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
 
@@ -223,7 +228,7 @@ async def predict_image(
     Args:
         file: Image file to classify
         seed: Optional random seed for reproducibility
-    
+
     Returns:
         Prediction results with class and confidence
     """
@@ -236,7 +241,9 @@ async def predict_image(
 
 
 @app.post("/resize")
-async def resize_image(file: UploadFile = File(...), width: int = 224, height: int = 224):
+async def resize_image(
+    file: UploadFile = File(...), width: int = 224, height: int = 224
+):
     """
     Resize an uploaded image.
 
@@ -250,8 +257,8 @@ async def resize_image(file: UploadFile = File(...), width: int = 224, height: i
     """
     try:
         contents = await file.read()
-        extension = file.filename.split('.')[-1].lower()
-        image_format = 'jpeg' if extension == 'jpg' else extension
+        extension = file.filename.split(".")[-1].lower()
+        image_format = "jpeg" if extension == "jpg" else extension
         resized_bytes = predictor.resize_image_from_bytes(
             contents, width, height, image_format
         )
@@ -259,7 +266,9 @@ async def resize_image(file: UploadFile = File(...), width: int = 224, height: i
         return StreamingResponse(
             io.BytesIO(resized_bytes),
             media_type=f"image/{image_format}",
-            headers={"Content-Disposition": f"attachment; filename=resized_{file.filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename=resized_{file.filename}"
+            },
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -278,16 +287,16 @@ async def convert_grayscale(file: UploadFile = File(...)):
     """
     try:
         contents = await file.read()
-        extension = file.filename.split('.')[-1].lower()
-        image_format = 'jpeg' if extension == 'jpg' else extension
-        output_bytes = predictor.convert_to_grayscale_from_bytes(
-            contents, image_format
-        )
+        extension = file.filename.split(".")[-1].lower()
+        image_format = "jpeg" if extension == "jpg" else extension
+        output_bytes = predictor.convert_to_grayscale_from_bytes(contents, image_format)
 
         return StreamingResponse(
             io.BytesIO(output_bytes),
             media_type=f"image/{image_format}",
-            headers={"Content-Disposition": f"attachment; filename=gray_{file.filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename=gray_{file.filename}"
+            },
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -316,15 +325,17 @@ async def crop_image(
     """
     try:
         contents = await file.read()
-        extension = file.filename.split('.')[-1].lower()
-        image_format = 'jpeg' if extension == 'jpg' else extension
+        extension = file.filename.split(".")[-1].lower()
+        image_format = "jpeg" if extension == "jpg" else extension
         box = (left, top, right, bottom)
         output_bytes = predictor.crop_image_from_bytes(contents, box, image_format)
 
         return StreamingResponse(
             io.BytesIO(output_bytes),
             media_type=f"image/{image_format}",
-            headers={"Content-Disposition": f"attachment; filename=cropped_{file.filename}"},
+            headers={
+                "Content-Disposition": f"attachment; filename=cropped_{file.filename}"
+            },
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -343,14 +354,16 @@ async def get_image_stats(file: UploadFile = File(...)):
     """
     try:
         contents = await file.read()
-        extension = file.filename.split('.')[-1].lower()
-        image_format = 'jpeg' if extension == 'jpg' else extension
+        extension = file.filename.split(".")[-1].lower()
+        image_format = "jpeg" if extension == "jpg" else extension
         output_bytes = predictor.normalize_image_from_bytes(contents, image_format)
 
         return StreamingResponse(
             io.BytesIO(output_bytes),
             media_type=f"image/{image_format}",
-            headers={"Content-Disposition": f"attachment; filename=normalized_{file.filename}"},
+            headers={
+                "Content-Disposition": f"attachment; filename=normalized_{file.filename}"
+            },
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
