@@ -10,14 +10,27 @@ from PIL import Image
 
 
 class ImagePredictor:
-    """Class for image prediction and preprocessing."""
+    """
+    A class for performing image prediction and various preprocessing operations.
+
+    This class encapsulates the logic for:
+    - Simulating image classification predictions.
+    - Resizing images.
+    - Converting images to grayscale.
+    - Normalizing image pixel values.
+    - Cropping images.
+
+    Attributes:
+        class_names (List[str]): A list of class names used for prediction.
+    """
 
     def __init__(self, class_names: List[str] = None):
         """
-        Initialize the predictor with class names.
+        Initialize the ImagePredictor instance.
 
         Args:
-            class_names: List of possible class names for prediction
+            class_names (List[str], optional): A custom list of class names to be used for
+                prediction. If None, a default set of classes (cat, dog, etc.) is used.
         """
         if class_names is None:
             self.class_names = [
@@ -39,14 +52,23 @@ class ImagePredictor:
         self, image_path: str = None, seed: int = None
     ) -> dict:
         """
-        Predict the class of an image (randomly for now).
+        Predict the class of an image.
+
+        Currently, this method simulates a prediction by randomly selecting a class
+        from the available class names and assigning a random confidence score.
 
         Args:
-            image_path: Path to the image file
-            seed: Random seed for reproducibility
+            image_path (str, optional): The file path to the image. Currently unused in the
+                mock prediction.
+            seed (int, optional): A seed for the random number generator to ensure
+                reproducible results.
 
         Returns:
-            Dictionary with prediction results
+            dict: A dictionary containing:
+                - 'predicted_class' (str): The name of the predicted class.
+                - 'confidence' (float): The confidence score of the prediction (between 0.7 and
+                  0.99).
+                - 'all_classes' (List[str]): A list of all available class names.
         """
         if seed is not None:
             random.seed(seed)
@@ -64,16 +86,17 @@ class ImagePredictor:
         self, image_path: str, width: int, height: int, output_path: str = None
     ) -> Tuple[int, int]:
         """
-        Resize an image to specified dimensions.
+        Resize an image file to specified dimensions.
 
         Args:
-            image_path: Path to input image
-            width: Target width
-            height: Target height
-            output_path: Path to save resized image (optional)
+            image_path (str): The path to the input image file.
+            width (int): The desired width in pixels.
+            height (int): The desired height in pixels.
+            output_path (str, optional): The path to save the resized image. If None, the
+                image is not saved.
 
         Returns:
-            Tuple of (new_width, new_height)
+            Tuple[int, int]: A tuple containing the new (width, height) of the resized image.
         """
         with Image.open(image_path) as img:
             resized_img = img.resize((width, height), Image.Resampling.LANCZOS)
@@ -87,16 +110,19 @@ class ImagePredictor:
         self, image_bytes: bytes, width: int, height: int, image_format: str
     ) -> bytes:
         """
-        Resize an image from bytes.
+        Resize an image provided as bytes.
+
+        This method is useful for processing images directly from memory (e.g., uploaded files)
+        without saving them to disk first.
 
         Args:
-            image_bytes: Image data as bytes
-            width: Target width
-            height: Target height
-            image_format: The format of the image (e.g., 'jpeg', 'png')
+            image_bytes (bytes): The raw image data.
+            width (int): The desired width in pixels.
+            height (int): The desired height in pixels.
+            image_format (str): The format of the image (e.g., 'jpeg', 'png') to use for the output.
 
         Returns:
-            Resized image as bytes
+            bytes: The resized image data as bytes.
         """
         img = Image.open(io.BytesIO(image_bytes))
         resized_img = img.resize((width, height), Image.Resampling.LANCZOS)
@@ -107,14 +133,15 @@ class ImagePredictor:
 
     def convert_to_grayscale(self, image_path: str, output_path: str = None) -> str:
         """
-        Convert an image to grayscale.
+        Convert an image file to grayscale.
 
         Args:
-            image_path: Path to input image
-            output_path: Path to save grayscale image (optional)
+            image_path (str): The path to the input image file.
+            output_path (str, optional): The path to save the grayscale image. If None, the
+                image is not saved.
 
         Returns:
-            Mode of the converted image
+            str: The mode of the converted image (usually 'L' for grayscale).
         """
         with Image.open(image_path) as img:
             grayscale_img = img.convert("L")
@@ -128,14 +155,14 @@ class ImagePredictor:
         self, image_bytes: bytes, image_format: str
     ) -> bytes:
         """
-        Convert an image from bytes to grayscale.
+        Convert an image provided as bytes to grayscale.
 
         Args:
-            image_bytes: Image data as bytes
-            image_format: The format of the image (e.g., 'jpeg', 'png')
+            image_bytes (bytes): The raw image data.
+            image_format (str): The format of the image (e.g., 'jpeg', 'png') to use for the output.
 
         Returns:
-            Grayscale image as bytes
+            bytes: The grayscale image data as bytes.
         """
         img = Image.open(io.BytesIO(image_bytes))
         grayscale_img = img.convert("L")
@@ -145,14 +172,20 @@ class ImagePredictor:
 
     def normalize_image(self, image_path: str, output_path: str = None) -> dict:
         """
-        Normalize an image and save it.
+        Normalize an image file and optionally save it.
+
+        Normalization involves calculating the mean and standard deviation of pixel values
+        and scaling the image data.
 
         Args:
-            image_path: Path to input image
-            output_path: Path to save normalized image (optional)
+            image_path (str): The path to the input image file.
+            output_path (str, optional): The path to save the normalized image. If None, the
+                image is not saved.
 
         Returns:
-            Dictionary with image statistics (mean, std)
+            dict: A dictionary containing the image statistics:
+                - 'mean': The mean pixel value.
+                - 'std': The standard deviation of pixel values.
         """
         with Image.open(image_path) as img:
             image_format = img.format
@@ -166,7 +199,10 @@ class ImagePredictor:
                 epsilon = 1e-6
                 normalized_array = (img_array - mean) / (std + epsilon)
                 min_val, max_val = np.min(normalized_array), np.max(normalized_array)
-                scaled_array = 255 * (normalized_array - min_val) / (max_val - min_val)
+                if max_val - min_val > epsilon:
+                    scaled_array = 255 * (normalized_array - min_val) / (max_val - min_val)
+                else:
+                    scaled_array = np.zeros_like(normalized_array)
                 scaled_array = scaled_array.astype(np.uint8)
                 normalized_img = Image.fromarray(scaled_array)
                 normalized_img.save(output_path, format=image_format)
@@ -180,15 +216,17 @@ class ImagePredictor:
         self, image_bytes: bytes, image_format: str
     ) -> bytes:
         """
-        Normalize an image from bytes.
-        The normalization is a contrast stretch for visualization.
+        Normalize an image provided as bytes.
+
+        This method performs contrast stretching to normalize the image for visualization purposes.
+        It scales the pixel values to the full 0-255 range.
 
         Args:
-            image_bytes: Image data as bytes
-            image_format: The format of the image (e.g., 'jpeg', 'png')
+            image_bytes (bytes): The raw image data.
+            image_format (str): The format of the image (e.g., 'jpeg', 'png') to use for the output.
 
         Returns:
-            Normalized image as bytes
+            bytes: The normalized image data as bytes.
         """
         img = Image.open(io.BytesIO(image_bytes))
         img_array = np.array(img).astype(np.float32)
@@ -201,7 +239,10 @@ class ImagePredictor:
 
         # Scale to 0-255 for visualization as a standard image
         min_val, max_val = np.min(normalized_array), np.max(normalized_array)
-        scaled_array = 255 * (normalized_array - min_val) / (max_val - min_val)
+        if max_val - min_val > epsilon:
+            scaled_array = 255 * (normalized_array - min_val) / (max_val - min_val)
+        else:
+            scaled_array = np.zeros_like(normalized_array)
         scaled_array = scaled_array.astype(np.uint8)
 
         normalized_img = Image.fromarray(scaled_array)
@@ -216,15 +257,17 @@ class ImagePredictor:
         output_path: str = None,
     ) -> Tuple[int, int]:
         """
-        Crop an image to specified coordinates.
+        Crop an image file to a specified region.
 
         Args:
-            image_path: Path to input image
-            box: A tuple of (left, top, right, bottom)
-            output_path: Path to save cropped image (optional)
+            image_path (str): The path to the input image file.
+            box (Tuple[int, int, int, int]): A tuple defining the crop region (left, top,
+                right, bottom).
+            output_path (str, optional): The path to save the cropped image. If None, the
+                image is not saved.
 
         Returns:
-            Tuple of (width, height) of cropped image
+            Tuple[int, int]: A tuple containing the (width, height) of the cropped image.
         """
         with Image.open(image_path) as img:
             cropped_img = img.crop(box)
@@ -238,15 +281,17 @@ class ImagePredictor:
         self, image_bytes: bytes, box: Tuple[int, int, int, int], image_format: str
     ) -> bytes:
         """
-        Crop an image from bytes.
+        Crop an image provided as bytes.
 
         Args:
-            image_bytes: Image data as bytes
-            box: A tuple of (left, top, right, bottom)
-            image_format: The format of the image (e.g., 'jpeg', 'png')
+            image_bytes (bytes): The raw image data.
+            box (Tuple[int, int, int, int]): A tuple defining the crop region (left, top,
+                right, bottom).
+            image_format (str): The format of the image (e.g., 'jpeg', 'png') to use for the
+                output.
 
         Returns:
-            Cropped image as bytes
+            bytes: The cropped image data as bytes.
         """
         img = Image.open(io.BytesIO(image_bytes))
         cropped_img = img.crop(box)

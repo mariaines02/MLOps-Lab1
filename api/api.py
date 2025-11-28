@@ -1,10 +1,22 @@
 """
-FastAPI application for image prediction and preprocessing.
+FastAPI Application for Image Classification and Preprocessing.
+
+This module defines the API endpoints for the MLOps Lab1 Demo.
+It provides functionalities for:
+- Image Classification (Prediction)
+- Image Resizing
+- Grayscale Conversion
+- Image Cropping
+- Image Normalization
+
+The application is built using FastAPI and serves a simple HTML frontend.
 """
 
 import io
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import uvicorn
 from logic.predictor import ImagePredictor
@@ -15,6 +27,9 @@ app = FastAPI(
     description="API for image classification and preprocessing",
     version="1.0.0",
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 predictor = ImagePredictor()
 
@@ -48,162 +63,27 @@ class ResizeResponse(BaseModel):
     message: str
 
 
+# Initial endpoint
 @app.get("/", response_class=HTMLResponse)
-async def home():
+async def home(request: Request):
     """
     Home endpoint serving the main page.
+
+    Returns:
+        TemplateResponse: The rendered 'home.html' template.
     """
-    html_content = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Image Classification API</title>
-        <style>
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 40px 20px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-            }
-            .container {
-                background: rgba(255, 255, 255, 0.95);
-                padding: 40px;
-                border-radius: 20px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                color: #333;
-            }
-            h1 {
-                color: #667eea;
-                text-align: center;
-                margin-bottom: 10px;
-                font-size: 2.5em;
-            }
-            .subtitle {
-                text-align: center;
-                color: #666;
-                margin-bottom: 40px;
-                font-size: 1.2em;
-            }
-            .feature-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
-                margin: 30px 0;
-            }
-            .feature-card {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 25px;
-                border-radius: 15px;
-                color: white;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                transition: transform 0.3s ease;
-            }
-            .feature-card:hover {
-                transform: translateY(-5px);
-            }
-            .feature-card h3 {
-                margin-top: 0;
-                font-size: 1.3em;
-            }
-            .cta-button {
-                display: block;
-                background: #667eea;
-                color: white;
-                padding: 15px 30px;
-                text-align: center;
-                text-decoration: none;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 1.1em;
-                margin: 30px auto;
-                max-width: 300px;
-                transition: background 0.3s ease;
-            }
-            .cta-button:hover {
-                background: #764ba2;
-            }
-            .info-section {
-                background: #f8f9fa;
-                padding: 20px;
-                border-radius: 10px;
-                margin: 20px 0;
-                border-left: 4px solid #667eea;
-            }
-            .endpoint-list {
-                list-style: none;
-                padding: 0;
-            }
-            .endpoint-list li {
-                padding: 10px;
-                margin: 5px 0;
-                background: white;
-                border-radius: 5px;
-                border-left: 3px solid #667eea;
-            }
-            code {
-                background: #f4f4f4;
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-family: 'Courier New', monospace;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🖼️ Image Classification API</h1>
-            <p class="subtitle">Machine Learning powered image processing and classification</p>
-            
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h3>🎯 Prediction</h3>
-                    <p>Classify images into predefined categories with confidence scores.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>📏 Resize</h3>
-                    <p>Resize images to any dimensions while maintaining quality.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>⚫ Grayscale</h3>
-                    <p>Convert colored images to grayscale for processing.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>✂️ Crop</h3>
-                    <p>Crop images to specific regions of interest.</p>
-                </div>
-            </div>
+    return templates.TemplateResponse(request=request, name="home.html")
 
-            <a href="/docs" class="cta-button">📚 Explore API Documentation</a>
 
-            <div class="info-section">
-                <h2>Available Endpoints</h2>
-                <ul class="endpoint-list">
-                    <li><strong>POST /predict</strong> - Predict image class</li>
-                    <li><strong>POST /resize</strong> - Resize an image</li>
-                    <li><strong>POST /grayscale</strong> - Convert to grayscale</li>
-                    <li><strong>POST /normalize</strong> - Get image statistics</li>
-                    <li><strong>POST /crop</strong> - Crop an image</li>
-                    <li><strong>GET /health</strong> - Check API health</li>
-                </ul>
-            </div>
-
-            <div class="info-section">
-                <h2>Quick Start</h2>
-                <p>1. Visit <code>/docs</code> for interactive API documentation</p>
-                <p>2. Use the "Try it out" button on any endpoint</p>
-                <p>3. Upload an image and see the results instantly</p>
-            </div>
-
-            <p style="text-align: center; margin-top: 40px; color: #666;">
-                <strong>MLOps Lab1</strong> - Continuous Integration with GitHub Actions<br>
-                Version 1.0.0 | Built with FastAPI & PIL
-            </p>
-        </div>
-    </body>
-    </html>
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
     """
-    return HTMLResponse(content=html_content)
+    Serve the favicon.ico file.
+
+    Returns:
+        FileResponse: The favicon image file.
+    """
+    return FileResponse("static/favicon.ico")
 
 
 @app.get("/health")
@@ -225,12 +105,19 @@ async def predict_image(
     """
     Predict the class of an uploaded image.
 
+    This endpoint accepts an image file, processes it, and returns the predicted class
+    along with a confidence score. Currently, it uses a mock predictor.
+
     Args:
-        file: Image file to classify
-        seed: Optional random seed for reproducibility
+        file (UploadFile): The image file to classify.
+        seed (int | None): Optional random seed for reproducibility of the mock prediction.
 
     Returns:
-        Prediction results with class and confidence
+        PredictionResponse: A JSON object containing the predicted class, confidence score,
+                            and a list of all possible classes.
+
+    Raises:
+        HTTPException: If an error occurs during prediction.
     """
     try:
         # For now, prediction is random (will be replaced with real model in Lab3)
@@ -245,15 +132,18 @@ async def resize_image(
     file: UploadFile = File(...), width: int = 224, height: int = 224
 ):
     """
-    Resize an uploaded image.
+    Resize an uploaded image to specified dimensions.
 
     Args:
-        file: Image file to resize
-        width: Target width (default: 224)
-        height: Target height (default: 224)
+        file (UploadFile): The image file to resize.
+        width (int): The target width in pixels (default: 224).
+        height (int): The target height in pixels (default: 224).
 
     Returns:
-        Resized image
+        StreamingResponse: The resized image as a file download.
+
+    Raises:
+        HTTPException: If an error occurs during processing.
     """
     try:
         contents = await file.read()
@@ -280,10 +170,13 @@ async def convert_grayscale(file: UploadFile = File(...)):
     Convert an uploaded image to grayscale.
 
     Args:
-        file: Image file to convert
+        file (UploadFile): The image file to convert.
 
     Returns:
-        Grayscale image
+        StreamingResponse: The grayscale image as a file download.
+
+    Raises:
+        HTTPException: If an error occurs during processing.
     """
     try:
         contents = await file.read()
@@ -311,17 +204,20 @@ async def crop_image(
     bottom: int = 224,
 ):
     """
-    Crop an uploaded image.
+    Crop an uploaded image to a specified region of interest (ROI).
 
     Args:
-        file: Image file to crop
-        left: Left coordinate
-        top: Top coordinate
-        right: Right coordinate
-        bottom: Bottom coordinate
+        file (UploadFile): The image file to crop.
+        left (int): The left coordinate of the box (default: 0).
+        top (int): The top coordinate of the box (default: 0).
+        right (int): The right coordinate of the box (default: 224).
+        bottom (int): The bottom coordinate of the box (default: 224).
 
     Returns:
-        Cropped image
+        StreamingResponse: The cropped image as a file download.
+
+    Raises:
+        HTTPException: If an error occurs during processing.
     """
     try:
         contents = await file.read()
@@ -344,13 +240,19 @@ async def crop_image(
 @app.post("/normalize")
 async def get_image_stats(file: UploadFile = File(...)):
     """
-    Normalize an uploaded image.
+    Normalize an uploaded image (contrast stretching).
+
+    This endpoint normalizes the pixel values of the image and scales them
+    to the 0-255 range for visualization.
 
     Args:
-        file: Image file to analyze
+        file (UploadFile): The image file to analyze and normalize.
 
     Returns:
-        Normalized image
+        StreamingResponse: The normalized image as a file download.
+
+    Raises:
+        HTTPException: If an error occurs during processing.
     """
     try:
         contents = await file.read()
