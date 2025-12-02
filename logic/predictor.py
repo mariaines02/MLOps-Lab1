@@ -200,7 +200,9 @@ class ImagePredictor:
                 normalized_array = (img_array - mean) / (std + epsilon)
                 min_val, max_val = np.min(normalized_array), np.max(normalized_array)
                 if max_val - min_val > epsilon:
-                    scaled_array = 255 * (normalized_array - min_val) / (max_val - min_val)
+                    scaled_array = (
+                        255 * (normalized_array - min_val) / (max_val - min_val)
+                    )
                 else:
                     scaled_array = np.zeros_like(normalized_array)
                 scaled_array = scaled_array.astype(np.uint8)
